@@ -1,30 +1,26 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:calculadora_imc/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Verifica se a calculadora IMC é exibida corretamente', (WidgetTester tester) async {
+    // Construa o aplicativo e acione um frame.
+    await tester.pumpWidget(MeuApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verifique se o texto 'Calculadora de IMC' está presente.
+    expect(find.text('Calculadora de IMC'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verifique se o botão 'Calcular IMC' está presente.
+    expect(find.text('Calcular IMC'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verifique se o campo de texto para altura está presente.
+    expect(find.byType(TextField).at(0), findsOneWidget);
+
+    // Verifique se o campo de texto para peso está presente.
+    expect(find.byType(TextField).at(1), findsOneWidget);
+
+    // Verifique se o botão de exclusão do teclado numérico está presente.
+    expect(find.byIcon(Icons.backspace), findsOneWidget);
   });
 }
