@@ -26,7 +26,8 @@ class _CalculadoraIMCState extends State<CalculadoraIMC> {
   final _controladorAltura = TextEditingController();
   final _controladorPeso = TextEditingController();
   String _resultado = "";
-  bool _campoAtivoPeso = false; // Indica se o campo ativo é o Peso ou Altura
+  String _classificacao = "";
+  bool _campoAtivoPeso = false;
 
   @override
   void initState() {
@@ -34,32 +35,54 @@ class _CalculadoraIMCState extends State<CalculadoraIMC> {
     _focarAltura();
   }
 
-  // Limpa o foco quando a tela é inicializada
   void _focarAltura() {
     Future.delayed(Duration(milliseconds: 100), () {
-      FocusScope.of(context).requestFocus(FocusNode());
-      FocusScope.of(context).requestFocus(FocusNode()); // Limpa o foco
+      FocusScope.of(context).unfocus(); // Limpa o foco
     });
   }
 
-  // Calcula o IMC com base na altura e peso fornecidos
   void _calcularIMC() {
     final altura = double.tryParse(_controladorAltura.text) ?? 0;
     final peso = double.tryParse(_controladorPeso.text) ?? 0;
 
+    // Converter altura de cm para metros
+    final alturaEmMetros = altura / 100;
+
     if (altura > 0 && peso > 0) {
-      final imc = peso / (altura * altura);
+      final imc = peso / (alturaEmMetros * alturaEmMetros);
       setState(() {
         _resultado = "IMC: ${imc.toStringAsFixed(2)}";
+        _classificacao = _classificarIMC(imc);
       });
     } else {
-      setState(() {
-        _resultado = "Por favor, insira valores válidos.";
-      });
+      _mostrarMensagemErro("Por favor, insira valores válidos.");
     }
   }
 
-  // Atualiza o campo ativo (Peso ou Altura) com o valor digitado
+  String _classificarIMC(double imc) {
+    if (imc < 16) {
+      return "Classificação: Magreza Grau III";
+    } else if (imc >= 16 && imc <= 16.9) {
+      return "Classificação: Magreza Grau II";
+    } else if (imc >= 17 && imc <= 18.4) {
+      return "Classificação: Magreza Grau I";
+    } else if (imc >= 18.5 && imc <= 24.9) {
+      return "Classificação: Eutrofia";
+    } else if (imc >= 25 && imc <= 29.9) {
+      return "Classificação: Pré-obesidade";
+    } else if (imc >= 30 && imc <= 34.9) {
+      return "Classificação: Obesidade Moderada (Grau I)";
+    } else if (imc >= 35 && imc <= 39.9) {
+      return "Classificação: Obesidade Severa (Grau II)";
+    } else {
+      return "Classificação: Obesidade Muito Severa (Grau III)";
+    }
+  }
+
+  void _mostrarMensagemErro(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
   void _atualizarCampo(String valor) {
     setState(() {
       if (_campoAtivoPeso) {
@@ -70,7 +93,6 @@ class _CalculadoraIMCState extends State<CalculadoraIMC> {
     });
   }
 
-  // Deleta o último caractere do campo ativo (Peso ou Altura)
   void _deletarUltimoCaracter() {
     setState(() {
       if (_campoAtivoPeso) {
@@ -85,7 +107,6 @@ class _CalculadoraIMCState extends State<CalculadoraIMC> {
     });
   }
 
-  // Define qual campo está ativo (Peso ou Altura)
   void _definirCampoAtivo(bool ativoPeso) {
     setState(() {
       _campoAtivoPeso = ativoPeso;
@@ -96,134 +117,130 @@ class _CalculadoraIMCState extends State<CalculadoraIMC> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Calculadora de IMC'),
+        title: const Text('Calculadora de IMC', textAlign: TextAlign.center),
+        centerTitle: true, // Alinhar o título no centro
       ),
-      body: Center(
-        child: Container(
-          constraints: BoxConstraints(maxWidth: 400), // Define a largura máxima do container
-          margin: EdgeInsets.all(5), // Margem ao redor do container
-          padding: EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue, width: 1), // Adiciona borda ao redor do container
-            borderRadius: BorderRadius.circular(8), // Arredonda os cantos do container
-            color: Colors.white, // Cor de fundo do container
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // Faz com que a coluna ocupe apenas o espaço necessário
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Center(
-                child: Container(
-                  height: 150, // Ajuste a altura conforme necessário
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(
-                        'https://play-lh.googleusercontent.com/ouL1lfSP_CyUgb5OUvI51jG3cevMfulA1GZGtS63r3Xfa8STYiIxq6KiY3PkMc6PcTk=w240-h480-rw',
-                      ),
-                      fit: BoxFit.cover, // Ajusta a imagem ao container
-                    ),
-                  ),
+      body: SingleChildScrollView( // Adicionado para permitir rolagem
+        child: Center(
+          child: Container(
+            width: 350, // Largura da calculadora
+            margin: const EdgeInsets.all(10), // Margem menor
+            padding: const EdgeInsets.all(20), // Espaçamento interno maior
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: Offset(0, 3), // Sombra abaixo
                 ),
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _controladorAltura,
-                decoration: InputDecoration(labelText: 'Altura (m)'),
-                keyboardType: TextInputType.number,
-                onTap: () => _definirCampoAtivo(false), // Define que o campo ativo é Altura
-              ),
-              TextField(
-                controller: _controladorPeso,
-                decoration: InputDecoration(labelText: 'Peso (kg)'),
-                keyboardType: TextInputType.number,
-                onTap: () => _definirCampoAtivo(true), // Define que o campo ativo é Peso
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _calcularIMC,
-                child: Text('Calcular IMC'),
-              ),
-              SizedBox(height: 20),
-              Text(
-                _resultado,
-                style: TextStyle(fontSize: 24),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 20),
-              _construirTecladoNumerico(),
-            ],
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _construirImagem(),
+                const SizedBox(height: 20),
+                _construirCampoTexto(_controladorAltura, 'Altura (cm)', false),
+                const SizedBox(height: 10), // Espaçamento entre os campos
+                _construirCampoTexto(_controladorPeso, 'Peso (kg)', true),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _calcularIMC,
+                  child: const Text('Calcular IMC'),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _resultado,
+                  style: const TextStyle(fontSize: 24),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _classificacao,
+                  style: const TextStyle(fontSize: 18),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                _construirTecladoNumerico(),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Constrói o teclado numérico com botões
-  Widget _construirTecladoNumerico() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _construirBotaoTeclado('7'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('8'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('9'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('DEL', isSpecial: true),
-          ],
+  Widget _construirImagem() {
+    return Center(
+      child: Container(
+        height: 200, // Altura da imagem
+        width: 200,  // Largura da imagem
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(
+              'https://play-lh.googleusercontent.com/ouL1lfSP_CyUgb5OUvI51jG3cevMfulA1GZGtS63r3Xfa8STYiIxq6KiY3PkMc6PcTk=w240-h480-rw',
+            ),
+            fit: BoxFit.cover,
+          ),
         ),
-        SizedBox(height: 5), // Espaçamento vertical entre as linhas
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _construirBotaoTeclado('4'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('5'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('6'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('.'),
-          ],
-        ),
-        SizedBox(height: 5), // Espaçamento vertical entre as linhas
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _construirBotaoTeclado('1'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('2'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('3'),
-            SizedBox(width: 5), // Espaçamento horizontal entre os botões
-            _construirBotaoTeclado('0'),
-          ],
-        ),
-      ],
+      ),
     );
   }
 
-  // Constrói um botão do teclado com o texto especificado
-  Widget _construirBotaoTeclado(String texto, {bool isSpecial = false}) {
+  Widget _construirCampoTexto(TextEditingController controlador, String rotulo, bool ativoPeso) {
+    return TextField(
+      controller: controlador,
+      decoration: InputDecoration(
+        labelText: rotulo,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      keyboardType: TextInputType.number,
+      onTap: () => _definirCampoAtivo(ativoPeso),
+    );
+  }
+
+  Widget _construirTecladoNumerico() {
+    List<List<String>> teclas = [
+      ['7', '8', '9', 'DEL'],
+      ['4', '5', '6', '.'],
+      ['1', '2', '3', '0'],
+    ];
+
+    return Column(
+      children: teclas.map((linha) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: linha.map((tecla) {
+            return _construirBotaoTeclado(tecla);
+          }).toList(),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _construirBotaoTeclado(String texto) {
     return ElevatedButton(
       onPressed: () {
         if (texto == 'DEL') {
           _deletarUltimoCaracter();
-        } else if (texto == '.') {
-          _atualizarCampo('.');
         } else {
           _atualizarCampo(texto);
         }
       },
       style: ElevatedButton.styleFrom(
-        fixedSize: Size(60, 60), // Tamanho fixo para os botões
+        fixedSize: const Size(60, 60),
       ),
-      child: isSpecial
-          ? Icon(Icons.backspace, size: 24) // Ícone de exclusão
+      child: texto == 'DEL'
+          ? const Icon(Icons.backspace, size: 24)
           : Text(
               texto,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.black,
                 fontSize: 18,
               ),
